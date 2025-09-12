@@ -1043,6 +1043,7 @@ end
 
 
 
-
+--ติดตั้งCollectModule
+local CollectModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/wino444_CollectModule/main/.lua"))()
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUxIllIll0O00OO/RobloxscriptTOU/refs/heads/main/Cmd"))()
