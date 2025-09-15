@@ -1,0 +1,593 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local Debris = game:GetService("Debris")
+local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local ragdolled = false
+local originalValues = {}
+local constraints = {}
+local noCollisionFolder
+local ragdollConstraintsFolder
+local char = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local Parent_upvr = char
+
+-- Utility functions from decompiled
+local function getLastWordFromPascalCase(arg1)
+    local reversed = arg1:reverse()
+    local upperPos = reversed:find("%u")
+    if not upperPos then upperPos = #arg1 + 1 end
+    return arg1:sub(#arg1 - (upperPos - 1) + 1):gsub("%d+$", "")
+end
+
+local function getLimbType(arg1)
+    local lastWord = getLastWordFromPascalCase(arg1)
+    local limbMap = {Hand = "Arm", Foot = "Leg"}
+    return limbMap[lastWord] or lastWord
+end
+
+local function recurse(arg1, arg2, arg3)
+    local var9 = arg3 or 0
+    for _, v in pairs(arg1:GetChildren()) do
+        var9 = var9 + 10
+        arg2(var9, v)
+        if #v:GetChildren() > 0 then
+            var9 = recurse(v, arg2, var9)
+        end
+    end
+    return var9
+end
+
+local function ragdollJoint(arg1, arg2, arg3, arg4, arg5)
+    if not (arg1 and arg2) then return end
+    local var14 = arg3 .. "RigAttachment"
+    local att0 = arg1:FindFirstChild(var14)
+    local att1 = arg2:FindFirstChild(var14)
+    if not (att0 and att1) then return end
+    local any = Instance.new(arg4 .. "Constraint")
+    any.Attachment0 = att0
+    any.Attachment1 = att1
+    any.Name = "RagdollConstraint" .. arg2.Name
+    local var16 = arg5 or {}
+    for _, v_2 in next, var16 do
+        pcall(function()
+            any[v_2[1]] = v_2[2]
+        end)
+    end
+    any.Parent = ragdollConstraintsFolder or Parent_upvr
+    table.insert(constraints, any)
+end
+
+local function getAttachment0(arg1)
+    for _, v_3 in next, Parent_upvr:GetChildren() do
+        local SOME = v_3:FindFirstChild(arg1)
+        if SOME then
+            return SOME
+        end
+    end
+end
+
+local function buildAttachmentMap(arg1)
+    local map = {}
+    for _, v in pairs(arg1:GetChildren()) do
+        if v:IsA("BasePart") then
+            for _, v_2 in pairs(v:GetChildren()) do
+                if v_2:IsA("Attachment") then
+                    local jointName = v_2.Name:match("^(.+)RigAttachment$")
+                    if jointName then
+                        local joint = v:FindFirstChild(jointName)
+                        if joint then
+                            map[v_2.Name] = {
+                                Joint = joint,
+                                Attachment0 = joint.Part0 and joint.Part0:FindFirstChild(v_2.Name),
+                                Attachment1 = joint.Part1 and joint.Part1:FindFirstChild(v_2.Name)
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return map
+end
+
+local function createNoCollision(arg1, arg2)
+    local noColl = Instance.new("NoCollisionConstraint")
+    noColl.Name = arg1.Name .. "<->" .. arg2.Name
+    noColl.Part0 = arg1
+    noColl.Part1 = arg2
+    noColl.Parent = noCollisionFolder
+end
+
+local function buildCollisionFilters(attachmentMap, primaryPart)
+    local folder = Instance.new("Folder")
+    folder.Name = "NoCollisionConstraints"
+    noCollisionFolder = folder
+
+    local limbs, limbList, collisionMatrix = {}, {}, {}
+    local function parsePart(part, prevType)
+        if part.Name ~= "HumanoidRootPart" then
+            local limbType = getLimbType(part.Name)
+            limbs[limbType] = limbs[limbType] or {}
+            table.insert(limbs[limbType], part)
+            collisionMatrix[limbType] = collisionMatrix[limbType] or {}
+            if prevType then
+                collisionMatrix[limbType][prevType] = true
+            end
+            table.insert(limbList, {Part = part, Type = limbType})
+        end
+        for _, att in pairs(part:GetChildren()) do
+            if att:IsA("Attachment") and attachmentMap[att.Name] then
+                local nextPart = attachmentMap[att.Name].Attachment1 and attachmentMap[att.Name].Attachment1.Parent
+                if nextPart and nextPart ~= part then
+                    parsePart(nextPart, getLimbType(part.Name))
+                end
+            end
+        end
+    end
+    parsePart(primaryPart or char.HumanoidRootPart)
+
+    for i = 1, #limbList do
+        for j = i + 1, #limbList do
+            local type1 = limbList[i].Type
+            local type2 = limbList[j].Type
+            if not (collisionMatrix[type1] and collisionMatrix[type1][type2]) and not (collisionMatrix[type2] and collisionMatrix[type2][type1]) then
+                createNoCollision(limbList[i].Part, limbList[j].Part)
+            end
+        end
+    end
+    for type1, limbGroup1 in pairs(limbs) do
+        for type2 in pairs(collisionMatrix[type1] or {}) do
+            for _, limb2 in pairs(limbs[type2] or {}) do
+                for _, limb1 in pairs(limbGroup1) do
+                    createNoCollision(limb1, limb2)
+                end
+            end
+        end
+    end
+    return folder
+end
+
+local function getConstraintTemplate(jointName)
+    local template = Instance.new("BallSocketConstraint")
+    template.LimitsEnabled = true
+    template.TwistLimitsEnabled = true
+    return template
+end
+
+local function createConstraint(attInfo)
+    local joint = attInfo.Joint
+    local template = getConstraintTemplate(joint.Name)
+    local clone = template:Clone()
+    clone.Attachment0 = attInfo.Attachment0
+    clone.Attachment1 = attInfo.Attachment1
+    clone.Name = joint.Name .. "RagdollConstraint"
+    local rigidValue = Instance.new("ObjectValue", clone)
+    rigidValue.Name = "RigidJoint"
+    rigidValue.Value = joint
+    clone.Parent = ragdollConstraintsFolder
+    return clone
+end
+
+local function buildConstraints(attachmentMap)
+    local folder = Instance.new("Folder")
+    folder.Name = "RagdollConstraints"
+    ragdollConstraintsFolder = folder
+    for _, attInfo in pairs(attachmentMap) do
+        if attInfo.Joint.Name ~= "Root" then
+            createConstraint(attInfo)
+        end
+    end
+    return folder
+end
+
+local ragdollStates = {
+    [Enum.HumanoidStateType.Dead] = true,
+    [Enum.HumanoidStateType.Physics] = true
+}
+
+local function hasRagdollOwnership(hum)
+    return true -- Client-side, assume ownership for exploit
+end
+
+local function setRagdollEnabled(hum, enabled)
+    local ragdollFolder = hum.Parent:FindFirstChild("RagdollConstraints")
+    if ragdollFolder then
+        for _, cons in pairs(ragdollFolder:GetChildren()) do
+            if cons:IsA("Constraint") then
+                local rigid = cons:FindFirstChild("RigidJoint")
+                if rigid and rigid.Value then
+                    rigid.Value.Part1 = enabled and cons.Attachment1.Parent or nil
+                end
+            end
+        end
+    end
+end
+
+-- Store originals
+local function storeOriginals()
+    originalValues.CanCollide = {}
+    for _, partName in pairs({"UpperTorso", "Head", "HumanoidRootPart", "LeftLowerLeg", "RightLowerLeg", "LeftFoot", "RightFoot"}) do
+        local part = char:FindFirstChild(partName)
+        if part then
+            originalValues.CanCollide[partName] = part.CanCollide
+        end
+    end
+    originalValues.Attachments = {}
+    recurse(char, function(_, obj)
+        if obj:IsA("Attachment") then
+            originalValues.Attachments[obj] = {Axis = obj.Axis, SecondaryAxis = obj.SecondaryAxis, Rotation = obj.Rotation}
+        end
+    end)
+    originalValues.ConstraintAttachments = {}
+    local constraintFolder = char:FindFirstChild("Constraint")
+    if constraintFolder then
+        for _, cons in pairs(constraintFolder:GetChildren()) do
+            if cons:IsA("Constraint") then
+                originalValues.ConstraintAttachments[cons] = {Attachment0 = cons.Attachment0, Attachment1 = cons.Attachment1}
+            end
+        end
+    end
+    originalValues.AnimateEnabled = char:FindFirstChild("Animate") and char.Animate.Enabled
+    originalValues.PlatformStand = humanoid.PlatformStand
+    originalValues.BreakJointsOnDeath = humanoid.BreakJointsOnDeath
+end
+
+-- Apply ragdoll
+local function applyRagdoll()
+    if ragdolled or humanoid.RigType ~= Enum.HumanoidRigType.R15 then return end
+    humanoid.BreakJointsOnDeath = false
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
+    if rootPart then rootPart.CanCollide = false end
+
+    local attachmentMap = buildAttachmentMap(char)
+    ragdollConstraintsFolder = buildConstraints(attachmentMap)
+    ragdollConstraintsFolder.Parent = char
+    noCollisionFolder = buildCollisionFilters(attachmentMap, char.PrimaryPart or rootPart)
+    noCollisionFolder.Parent = char
+
+    CollectionService:AddTag(humanoid, "Ragdoll")
+
+    storeOriginals()
+    ragdolled = true
+
+    if Players.LocalPlayer.PlayerGui:FindFirstChild("Highlights") then
+        Players.LocalPlayer.PlayerGui.Highlights:ClearAllChildren()
+    end
+    task.wait()
+
+    local parts = {"UpperTorso", "Head", "HumanoidRootPart", "LeftLowerLeg", "RightLowerLeg", "LeftFoot", "RightFoot"}
+    local canCollideVals = {false, true, false, true, true, true, true}
+    for i, partName in pairs(parts) do
+        local part = char:FindFirstChild(partName)
+        if part then part.CanCollide = canCollideVals[i] end
+    end
+
+    local constraintFolder = char:FindFirstChild("Constraint")
+    if constraintFolder then
+        local jointConfigs = {
+            {name = "ConstraintUpperTorso", part0 = "UpperTorso", part1 = "LowerTorso", att = "WaistRigAttachment"},
+            {name = "ConstraintHead", part0 = "UpperTorso", part1 = "Head", att = "NeckRigAttachment"},
+            {name = "ConstraintRightUpperArm", part0 = "UpperTorso", part1 = "RightUpperArm", att = "RightShoulderRigAttachment"},
+            {name = "ConstraintRightLowerArm", part0 = "RightUpperArm", part1 = "RightLowerArm", att = "RightElbowRigAttachment"},
+            {name = "ConstraintRightHand", part0 = "RightLowerArm", part1 = "RightHand", att = "RightWristRigAttachment"},
+            {name = "ConstraintLeftUpperArm", part0 = "UpperTorso", part1 = "LeftUpperArm", att = "LeftShoulderRigAttachment"},
+            {name = "ConstraintLeftLowerArm", part0 = "LeftUpperArm", part1 = "LeftLowerArm", att = "LeftElbowRigAttachment"},
+            {name = "ConstraintLeftHand", part0 = "LeftLowerArm", part1 = "LeftHand", att = "LeftWristRigAttachment"},
+            {name = "ConstraintLeftUpperLeg", part0 = "LowerTorso", part1 = "LeftUpperLeg", att = "LeftHipRigAttachment"},
+            {name = "ConstraintLeftLowerLeg", part0 = "LeftUpperLeg", part1 = "LeftLowerLeg", att = "LeftKneeRigAttachment"},
+            {name = "ConstraintLeftFoot", part0 = "LeftLowerLeg", part1 = "LeftFoot", att = "LeftAnkleRigAttachment"},
+            {name = "ConstraintRightUpperLeg", part0 = "LowerTorso", part1 = "RightUpperLeg", att = "RightHipRigAttachment"},
+            {name = "ConstraintRightLowerLeg", part0 = "RightUpperLeg", part1 = "RightLowerLeg", att = "RightKneeRigAttachment"},
+            {name = "ConstraintRightFoot", part0 = "RightLowerLeg", part1 = "RightFoot", att = "RightAnkleRigAttachment"}
+        }
+        for _, config in pairs(jointConfigs) do
+            local cons = constraintFolder:FindFirstChild(config.name)
+            if cons and char:FindFirstChild(config.part0) and char:FindFirstChild(config.part1) then
+                cons.Attachment0 = char[config.part0]:FindFirstChild(config.att)
+                cons.Attachment1 = char[config.part1]:FindFirstChild(config.att)
+            end
+        end
+        local blood = constraintFolder:FindFirstChild("Blood")
+        if blood and char:FindFirstChild("UpperTorso") then
+            blood.Parent = char.UpperTorso
+        end
+    end
+
+    recurse(char, function(_, arg2)
+        if arg2:IsA("Attachment") then
+            arg2.Axis = Vector3.new(0, 0, 0)
+            arg2.SecondaryAxis = Vector3.new(0, 0, 0)
+            arg2.Rotation = Vector3.new(0, 0, 0)
+        end
+    end)
+
+    for _, v_4 in pairs(char:GetChildren()) do
+        if v_4:IsA("Accoutrement") then
+            for _, v_5 in pairs(v_4:GetChildren()) do
+                if v_5:IsA("BasePart") then
+                    v_5.Parent = char
+                    v_4:Destroy()
+                    local att = v_5:FindFirstChildOfClass("Attachment")
+                    if att then
+                        local parentAtt = getAttachment0(att.Name)
+                        if parentAtt then
+                            local hinge = Instance.new("HingeConstraint")
+                            hinge.Attachment0 = parentAtt
+                            hinge.Attachment1 = att
+                            hinge.LimitsEnabled = true
+                            hinge.UpperAngle = 5
+                            hinge.LowerAngle = -5
+                            hinge.Parent = char
+                            table.insert(constraints, hinge)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Adjusted ragdollJoints with proper types and properties
+    ragdollJoint(char.LowerTorso, char.UpperTorso, "Waist", "BallSocket", {{"LimitsEnabled", true}, {"UpperAngle", 45}, {"TwistLimitsEnabled", true}, {"TwistUpperAngle", 90}, {"TwistLowerAngle", -90}})
+    ragdollJoint(char.UpperTorso, char.Head, "Neck", "BallSocket", {{"LimitsEnabled", true}, {"UpperAngle", 30}, {"TwistLimitsEnabled", true}, {"TwistUpperAngle", 45}, {"TwistLowerAngle", -45}})
+    local tbl_wrist = {{"LimitsEnabled", true}, {"UpperAngle", 20}, {"TwistLimitsEnabled", true}, {"TwistUpperAngle", 90}, {"TwistLowerAngle", -90}}
+    ragdollJoint(char.LeftLowerArm, char.LeftHand, "LeftWrist", "BallSocket", tbl_wrist)
+    ragdollJoint(char.RightLowerArm, char.RightHand, "RightWrist", "BallSocket", tbl_wrist)
+    local tbl_knee = {{"LimitsEnabled", true}, {"UpperAngle", 0}, {"LowerAngle", -130}}
+    ragdollJoint(char.LeftUpperLeg, char.LeftLowerLeg, "LeftKnee", "Hinge", tbl_knee)
+    ragdollJoint(char.RightUpperLeg, char.RightLowerLeg, "RightKnee", "Hinge", tbl_knee)
+    local tbl_ankle = {{"LimitsEnabled", true}, {"UpperAngle", 45}, {"LowerAngle", -45}}
+    ragdollJoint(char.LeftLowerLeg, char.LeftFoot, "LeftAnkle", "Hinge", tbl_ankle)
+    ragdollJoint(char.RightLowerLeg, char.RightFoot, "RightAnkle", "Hinge", tbl_ankle)
+
+    if char:FindFirstChild("Animate") then
+        char.Animate.Enabled = false
+    end
+    humanoid.PlatformStand = true
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+
+    -- Sound and particle
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxasset://sounds/action_falling.mp3"
+    sound.Volume = 1
+    sound.Parent = rootPart
+    sound:Play()
+    Debris:AddItem(sound, 2)
+
+    local smoke = Instance.new("ParticleEmitter")
+    smoke.Texture = "rbxassetid://24123432" -- Smoke texture
+    smoke.Rate = 50
+    smoke.Lifetime = NumberRange.new(1, 2)
+    smoke.Parent = char.UpperTorso
+    task.delay(2, function() smoke:Destroy() end)
+
+    local startRagdoll = char:FindFirstChild("Start Ragdoll")
+    if startRagdoll then startRagdoll.Disabled = true end
+
+    -- Loop to maintain ragdoll if anti-cheat resets
+    task.spawn(function()
+        while ragdolled do
+            if hasRagdollOwnership(humanoid) then
+                setRagdollEnabled(humanoid, true)
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    -- Camera shake for immersion
+    task.spawn(function()
+        local camera = Workspace.CurrentCamera
+        local originalCFrame = camera.CFrame
+        for i = 1, 10 do
+            camera.CFrame = originalCFrame * CFrame.new(math.random(-1,1)*0.1, math.random(-1,1)*0.1, math.random(-1,1)*0.1)
+            task.wait(0.05)
+        end
+        camera.CFrame = originalCFrame
+    end)
+end
+
+-- Apply unragdoll
+local function applyUnragdoll()
+    if not ragdolled then return end
+    ragdolled = false
+
+    for partName, value in pairs(originalValues.CanCollide) do
+        local part = char:FindFirstChild(partName)
+        if part then part.CanCollide = value end
+    end
+
+    for att, vals in pairs(originalValues.Attachments) do
+        if att.Parent then
+            att.Axis = vals.Axis
+            att.SecondaryAxis = vals.SecondaryAxis
+            att.Rotation = vals.Rotation
+        end
+    end
+
+    for cons, vals in pairs(originalValues.ConstraintAttachments) do
+        if cons.Parent then
+            cons.Attachment0 = vals.Attachment0
+            cons.Attachment1 = vals.Attachment1
+        end
+    end
+
+    for _, cons in pairs(constraints) do
+        if cons.Parent then cons:Destroy() end
+    end
+    constraints = {}
+
+    if ragdollConstraintsFolder then ragdollConstraintsFolder:Destroy() end
+    if noCollisionFolder then noCollisionFolder:Destroy() end
+
+    if char.UpperTorso:FindFirstChild("Blood") then char.UpperTorso.Blood:Destroy() end
+
+    if char:FindFirstChild("Animate") then
+        char.Animate.Enabled = originalValues.AnimateEnabled or true
+    end
+    humanoid.PlatformStand = originalValues.PlatformStand or false
+    humanoid.BreakJointsOnDeath = originalValues.BreakJointsOnDeath or true
+    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+
+    local startRagdoll = char:FindFirstChild("Start Ragdoll")
+    if startRagdoll then startRagdoll.Disabled = false end
+
+    CollectionService:RemoveTag(humanoid, "Ragdoll")
+
+    originalValues = {}
+end
+
+-- UI Setup (draggable, mobile-friendly)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "FERagdollGui"
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 150, 0, 120)
+Frame.Position = UDim2.new(0.5, -75, 0.8, -60)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BackgroundTransparency = 0.3
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+Frame.Visible = true
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = Frame
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0.8, 0, 0.3, 0)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.1, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Text = "Ragdoll"
+ToggleButton.Font = Enum.Font.SourceSansBold
+ToggleButton.TextSize = 18
+ToggleButton.Parent = Frame
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0.2, 0, 0.15, 0)
+CloseButton.Position = UDim2.new(0.85, 0, 0.05, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Text = "X"
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextSize = 16
+CloseButton.Parent = Frame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0.8, 0, 0.4, 0)
+Title.Position = UDim2.new(0.1, 0, 0.45, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Text = "FE Ragdoll\nExploit by wino444"
+Title.Font = Enum.Font.SourceSans
+Title.TextSize = 14
+Title.TextWrapped = true
+Title.Parent = Frame
+
+local OpenButton = Instance.new("TextButton")
+OpenButton.Size = UDim2.new(0, 50, 0, 50)
+OpenButton.Position = UDim2.new(0, 10, 0.8, -25)
+OpenButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.Text = "+"
+OpenButton.Font = Enum.Font.SourceSansBold
+OpenButton.TextSize = 20
+OpenButton.Parent = ScreenGui
+OpenButton.Visible = false
+
+local OpenUICorner = Instance.new("UICorner")
+OpenUICorner.CornerRadius = UDim.new(0, 10)
+OpenUICorner.Parent = OpenButton
+
+-- Draggable UI
+local dragging, dragInput, dragStart, startPos
+Frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Close/Open buttons
+CloseButton.MouseButton1Click:Connect(function()
+    Frame.Visible = false
+    OpenButton.Visible = true
+end)
+
+OpenButton.MouseButton1Click:Connect(function()
+    Frame.Visible = true
+    OpenButton.Visible = false
+end)
+
+-- Touch feedback
+ToggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        ToggleButton.Size = UDim2.new(0.82, 0, 0.32, 0)
+    end
+end)
+
+ToggleButton.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        ToggleButton.Size = UDim2.new(0.8, 0, 0.3, 0)
+    end
+end)
+
+-- Toggle
+ToggleButton.MouseButton1Click:Connect(function()
+    task.wait()
+    char = Players.LocalPlayer.Character
+    humanoid = char and char:FindFirstChildWhichIsA("Humanoid")
+    if not char or not humanoid or not char:FindFirstChild("UpperTorso") then
+        ToggleButton.Text = "Error: No Character"
+        task.wait(1)
+        ToggleButton.Text = "Ragdoll"
+        return
+    end
+
+    if not ragdolled then
+        applyRagdoll()
+        ToggleButton.Text = "Unragdoll"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 85, 0)
+    else
+        applyUnragdoll()
+        ToggleButton.Text = "Ragdoll"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    end
+end)
+
+-- Respawn handle
+Players.LocalPlayer.CharacterAdded:Connect(function(newChar)
+    task.wait()
+    char = newChar
+    humanoid = char:WaitForChild("Humanoid")
+    ragdolled = false
+    originalValues = {}
+    constraints = {}
+    if ragdollConstraintsFolder then ragdollConstraintsFolder:Destroy() end
+    if noCollisionFolder then noCollisionFolder:Destroy() end
+    ToggleButton.Text = "Ragdoll"
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+end)
