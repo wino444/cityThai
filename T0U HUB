@@ -201,6 +201,7 @@ player.CharacterAdded:Connect(function(newCharacter)
         showHome()
     end
 end)
+
 local function clearContent()
     for _, child in pairs(contentFrame:GetChildren()) do
         child:Destroy()
@@ -564,6 +565,7 @@ local function showScript()
         _G.AutoCollectModule.CollectItemByName("M4")
     end)
 end
+
 local copyOutfitCode = [[
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -932,6 +934,30 @@ local function showScriptUI()
     preventArrestButton.MouseButton1Click:Connect(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUx1/Roblox-script/refs/heads/main/Touscript"))()
     end)
+
+    local preventArrestV2Label = Instance.new("TextLabel")
+    preventArrestV2Label.Size = UDim2.new(0,120,0,30)
+    preventArrestV2Label.Position = UDim2.new(0,10,0,140)
+    preventArrestV2Label.BackgroundTransparency = 1
+    preventArrestV2Label.Text = "ป้องกันจับV2"
+    preventArrestV2Label.TextColor3 = Color3.fromRGB(255,255,255)
+    preventArrestV2Label.TextSize = 18
+    preventArrestV2Label.Font = Enum.Font.Gotham
+    preventArrestV2Label.TextXAlignment = Enum.TextXAlignment.Left
+    preventArrestV2Label.Parent = contentFrame
+
+    local preventArrestV2Button = Instance.new("TextButton")
+    preventArrestV2Button.Size = UDim2.new(0,80,0,30)
+    preventArrestV2Button.Position = UDim2.new(0,140,0,140)
+    preventArrestV2Button.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    preventArrestV2Button.Text = "รัน"
+    preventArrestV2Button.TextColor3 = Color3.fromRGB(255,255,255)
+    preventArrestV2Button.TextSize = 18
+    preventArrestV2Button.Parent = contentFrame
+
+    preventArrestV2Button.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUxIllIll0O00OO/RobloxscriptTOU/refs/heads/main/Anti%20Got%20caught"))()
+    end)
 end
 
 homeButton.MouseButton1Click:Connect(showHome)
@@ -1032,14 +1058,9 @@ local function checkMessage()
     if channel then
         channel:SendAsync("ผมใช้TOU HUB🎉")
     else
-        warn("❌ ไม่พบแชนเนล RBXGeneral")
+        warn("❌ ไม่พบแชร์แชล RBXGeneral")
     end
 end
-
-
-
-
-
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/PhantomNet/main/phantom_client.lua"))()
 
