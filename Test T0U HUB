@@ -1,4 +1,3 @@
--- Main HUB script (run this in executor)
 local UiLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/winhub/main/ui.lua"))()
 
 local player = game.Players.LocalPlayer
@@ -159,4 +158,4 @@ local function sendMessage(msg)
     end
 end
 
-sendMessage("SCRIPT CITY THAILAND 2 BY:TOUx1")
+--sendMessage("SCRIPT CITY THAILAND 2 BY:TOUx1")
