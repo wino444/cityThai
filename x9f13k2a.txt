@@ -1,1 +1,4 @@
-enabled=false
+return {
+  enabled = true,
+  version = "1.0.3"
+}d
