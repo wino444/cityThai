@@ -1,4 +1,4 @@
 return {
-  enabled = true,
+  enabled = false,
   version = "1.0.3"
 }
