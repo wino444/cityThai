@@ -1,8 +1,5 @@
--- [TOUx1 HUB] - EXPLOITER EDITION 🔥😈
--- ปรับปรุง: ทุกหน้าเลื่อนได้ + ระบบ addButton
--- เปลี่ยน: aimbot, Copy Outfit → โหลดจาก URL ใหม่
--- เพิ่ม: ปุ่ม "ปรับขนาดตัว" ใน script ui
--- ซ่อม: จัด layout อัตโนมัติ ไม่ทับกัน
+-- TOUx1 HUB [Exploiter Edition] 🕶️🔥
+-- อัปเดต: ใช้ HttpGet แทนโค้ดยาว, เพิ่ม ปรับขนาดตัว
 
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -12,7 +9,6 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- [MAIN FRAME - DRAGGABLE]
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 500, 0, 300)
 mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
@@ -22,7 +18,6 @@ mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
--- [DRAG SYSTEM]
 local UserInputService = game:GetService("UserInputService")
 local dragging, dragInput, dragStart, startPos
 
@@ -35,7 +30,8 @@ local function updateInput(input)
 end
 
 mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 
+    or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = mainFrame.Position
@@ -48,7 +44,8 @@ mainFrame.InputBegan:Connect(function(input)
 end)
 
 mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseMovement 
+    or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
@@ -59,7 +56,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- [SIDEBAR]
 local sideBar = Instance.new("Frame")
 sideBar.Size = UDim2.new(0, 120, 1, 0)
 sideBar.BackgroundColor3 = Color3.fromRGB(80,80,80)
@@ -115,7 +111,6 @@ scriptUIButton.TextSize = 18
 scriptUIButton.Font = Enum.Font.Gotham
 scriptUIButton.Parent = sideBar
 
--- [HEADER]
 local hubText = Instance.new("TextLabel")
 hubText.Size = UDim2.new(1,-120,0,40)
 hubText.Position = UDim2.new(0,120,0,0)
@@ -135,32 +130,12 @@ closeButton.TextColor3 = Color3.fromRGB(255,255,255)
 closeButton.TextSize = 20
 closeButton.Parent = mainFrame
 
--- [SCROLLING CONTENT FRAME]
-local contentScroll = Instance.new("ScrollingFrame")
-contentScroll.Size = UDim2.new(1,-120,1,-40)
-contentScroll.Position = UDim2.new(0,120,0,40)
-contentScroll.BackgroundTransparency = 1
-contentScroll.ScrollBarThickness = 6
-contentScroll.CanvasSize = UDim2.new(0,0,0,0)
-contentScroll.Parent = mainFrame
-
 local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1,0,0,0)
+contentFrame.Size = UDim2.new(1,-120,1,-40)
+contentFrame.Position = UDim2.new(0,120,0,40)
 contentFrame.BackgroundTransparency = 1
-contentFrame.Parent = contentScroll
+contentFrame.Parent = mainFrame
 
--- [AUTO UPDATE CANVAS SIZE]
-local function updateCanvas()
-    local totalHeight = 0
-    for _, child in pairs(contentFrame:GetChildren()) do
-        if child:IsA("GuiObject") then
-            totalHeight = totalHeight + child.AbsoluteSize.Y + 10
-        end
-    end
-    contentScroll.CanvasSize = UDim2.new(0,0,0, math.max(totalHeight + 20, contentScroll.AbsoluteSize.Y))
-end
-
--- [MINIMIZE ICON]
 local minimizeFrame = Instance.new("Frame")
 minimizeFrame.Size = UDim2.new(0, 50, 0, 50)
 minimizeFrame.Position = UDim2.new(0, 10, 0, 10)
@@ -175,7 +150,6 @@ openButton.BackgroundTransparency = 1
 openButton.Image = "rbxassetid://106575147804507"
 openButton.Parent = minimizeFrame
 
--- [MINIMIZE DRAG]
 local minDragging, minDragInput, minDragStart, minStartPos
 
 local function minUpdateInput(input)
@@ -187,7 +161,8 @@ local function minUpdateInput(input)
 end
 
 minimizeFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 
+    or input.UserInputType == Enum.UserInputType.Touch then
         minDragging = true
         minDragStart = input.Position
         minStartPos = minimizeFrame.Position
@@ -200,7 +175,8 @@ minimizeFrame.InputBegan:Connect(function(input)
 end)
 
 minimizeFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseMovement 
+    or input.UserInputType == Enum.UserInputType.Touch then
         minDragInput = input
     end
 end)
@@ -221,99 +197,51 @@ openButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = true
 end)
 
--- [CHARACTER RELOAD]
 player.CharacterAdded:Connect(function(newCharacter)
     character = newCharacter
     humanoid = newCharacter:WaitForChild("Humanoid")
 end)
 
--- [UTILS]
 local function clearContent()
     for _, child in pairs(contentFrame:GetChildren()) do
-        if child:IsA("GuiObject") then
-            child:Destroy()
-        end
+        child:Destroy()
     end
 end
 
-local function safeHttpGet(url)
-    local success, result = pcall(function()
-        return game:HttpGet(url)
-    end)
-    if success then
-        return result
-    else
-        warn("❌ HttpGet ล้มเหลว: "..url)
-        return nil
-    end
-end
-
--- [AUTO ADD FUNCTION]
-local function add(obj, yPos)
-    obj.Position = UDim2.new(0,10,0,yPos)
-    obj.Parent = contentFrame
-    return yPos + obj.AbsoluteSize.Y + 10
-end
-
--- [BUTTON CREATOR FUNCTION]
-local function addButton(labelText, buttonText, callback, color)
-    local yPos = #contentFrame:GetChildren() > 0 and contentFrame:GetChildren()[#contentFrame:GetChildren()].AbsolutePosition.Y + contentFrame:GetChildren()[#contentFrame:GetChildren()].AbsoluteSize.Y + 10 or 20
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0,120,0,30)
-    label.BackgroundTransparency = 1
-    label.Text = labelText
-    label.TextColor3 = Color3.fromRGB(255,255,255)
-    label.TextSize = 18
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    yPos = add(label, yPos)
-
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0,80,0,30)
-    button.BackgroundColor3 = color or Color3.fromRGB(60,60,60)
-    button.Text = buttonText
-    button.TextColor3 = Color3.fromRGB(255,255,255)
-    button.TextSize = 18
-    yPos = add(button, yPos)
-
-    button.MouseButton1Click:Connect(callback)
-    updateCanvas()
-end
-
--- [SHOW HOME]
 local function showHome()
     clearContent()
-    local yPos = 10
-
     local profileImage = Instance.new("ImageLabel")
     profileImage.Size = UDim2.new(0,60,0,60)
+    profileImage.Position = UDim2.new(0,10,0,10)
     profileImage.BackgroundTransparency = 1
     profileImage.Image = "rbxthumb://type=AvatarHeadShot&id="..player.UserId.."&w=150&h=150"
-    yPos = add(profileImage, yPos)
+    profileImage.Parent = contentFrame
 
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Size = UDim2.new(1,-80,0,30)
+    nameLabel.Position = UDim2.new(0,80,0,15)
     nameLabel.BackgroundTransparency = 1
     nameLabel.Text = "ชื่อ: "..player.Name
     nameLabel.TextColor3 = Color3.fromRGB(255,255,255)
     nameLabel.TextSize = 18
     nameLabel.Font = Enum.Font.Gotham
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    yPos = add(nameLabel, yPos)
+    nameLabel.Parent = contentFrame
 
     local ageLabel = Instance.new("TextLabel")
     ageLabel.Size = UDim2.new(1,-80,0,30)
+    ageLabel.Position = UDim2.new(0,80,0,50)
     ageLabel.BackgroundTransparency = 1
     ageLabel.Text = "จำนวนวันที่สร้าง: "..player.AccountAge.." วัน"
     ageLabel.TextColor3 = Color3.fromRGB(255,255,255)
     ageLabel.TextSize = 18
     ageLabel.Font = Enum.Font.Gotham
     ageLabel.TextXAlignment = Enum.TextXAlignment.Left
-    yPos = add(ageLabel, yPos)
+    ageLabel.Parent = contentFrame
 
     local creatorLabel = Instance.new("TextLabel")
     creatorLabel.Size = UDim2.new(1,-20,0,50)
+    creatorLabel.Position = UDim2.new(0,10,0,90)
     creatorLabel.BackgroundTransparency = 1
     creatorLabel.Text = "คนสร้าง @TOUx1 สร้าง GUI , script \nคนช่วยสร้าง @wino444 สร้าง script หยิบของ"
     creatorLabel.TextColor3 = Color3.fromRGB(255,255,255)
@@ -322,34 +250,31 @@ local function showHome()
     creatorLabel.TextXAlignment = Enum.TextXAlignment.Left
     creatorLabel.TextYAlignment = Enum.TextYAlignment.Top
     creatorLabel.TextWrapped = true
-    yPos = add(creatorLabel, yPos)
-
-    updateCanvas()
+    creatorLabel.Parent = contentFrame
 end
 
--- [SHOW PLAYER]
 local function showPlayer()
     clearContent()
-    local yPos = 20
-
     -- Speed
     local speedLabel = Instance.new("TextLabel")
     speedLabel.Size = UDim2.new(0,150,0,30)
+    speedLabel.Position = UDim2.new(0,10,0,20)
     speedLabel.BackgroundTransparency = 1
     speedLabel.Text = "ความเร็ว: "..humanoid.WalkSpeed
     speedLabel.TextColor3 = Color3.fromRGB(255,255,255)
     speedLabel.TextSize = 18
     speedLabel.Font = Enum.Font.Gotham
     speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-    yPos = add(speedLabel, yPos)
+    speedLabel.Parent = contentFrame
 
     local speedBox = Instance.new("TextBox")
     speedBox.Size = UDim2.new(0,80,0,30)
+    speedBox.Position = UDim2.new(0,170,0,20)
     speedBox.BackgroundColor3 = Color3.fromRGB(128,128,128)
     speedBox.Text = tostring(humanoid.WalkSpeed)
     speedBox.TextColor3 = Color3.fromRGB(255,255,255)
     speedBox.TextSize = 18
-    yPos = add(speedBox, yPos)
+    speedBox.Parent = contentFrame
 
     speedBox.FocusLost:Connect(function(enter)
         if enter then
@@ -366,21 +291,23 @@ local function showPlayer()
     -- Jump
     local jumpLabel = Instance.new("TextLabel")
     jumpLabel.Size = UDim2.new(0,150,0,30)
+    jumpLabel.Position = UDim2.new(0,10,0,60)
     jumpLabel.BackgroundTransparency = 1
     jumpLabel.Text = "กระโดด: "..humanoid.JumpPower
     jumpLabel.TextColor3 = Color3.fromRGB(255,255,255)
     jumpLabel.TextSize = 18
     jumpLabel.Font = Enum.Font.Gotham
     jumpLabel.TextXAlignment = Enum.TextXAlignment.Left
-    yPos = add(jumpLabel, yPos)
+    jumpLabel.Parent = contentFrame
 
     local jumpBox = Instance.new("TextBox")
     jumpBox.Size = UDim2.new(0,80,0,30)
+    jumpBox.Position = UDim2.new(0,170,0,60)
     jumpBox.BackgroundColor3 = Color3.fromRGB(128,128,128)
     jumpBox.Text = tostring(humanoid.JumpPower)
     jumpBox.TextColor3 = Color3.fromRGB(255,255,255)
     jumpBox.TextSize = 18
-    yPos = add(jumpBox, yPos)
+    jumpBox.Parent = contentFrame
 
     jumpBox.FocusLost:Connect(function(enter)
         if enter then
@@ -394,30 +321,31 @@ local function showPlayer()
         end
     end)
 
-    -- Respawn
     local respawnLabel = Instance.new("TextLabel")
     respawnLabel.Size = UDim2.new(0,150,0,30)
+    respawnLabel.Position = UDim2.new(0,10,0,100)
     respawnLabel.BackgroundTransparency = 1
     respawnLabel.Text = "เกิดกลับที่"
     respawnLabel.TextColor3 = Color3.fromRGB(255,255,255)
     respawnLabel.TextSize = 18
     respawnLabel.Font = Enum.Font.Gotham
     respawnLabel.TextXAlignment = Enum.TextXAlignment.Left
-    yPos = add(respawnLabel, yPos)
+    respawnLabel.Parent = contentFrame
 
     local respawnButton = Instance.new("TextButton")
     respawnButton.Size = UDim2.new(0,80,0,30)
+    respawnButton.Position = UDim2.new(0,170,0,100)
     respawnButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
     respawnButton.Text = "ปิด"
     respawnButton.TextColor3 = Color3.fromRGB(255,255,255)
     respawnButton.TextSize = 18
-    yPos = add(respawnButton, yPos)
+    respawnButton.Parent = contentFrame
 
-    local respawnAtDeathPos = false
+    _G.respawnAtDeathPos = false
     respawnButton.MouseButton1Click:Connect(function()
-        respawnAtDeathPos = not respawnAtDeathPos
-        respawnButton.Text = respawnAtDeathPos and "เปิด" or "ปิด"
-        if respawnAtDeathPos then
+        _G.respawnAtDeathPos = not _G.respawnAtDeathPos
+        respawnButton.Text = _G.respawnAtDeathPos and "เปิด" or "ปิด"
+        if _G.respawnAtDeathPos then
             if _G.ReviveBackConnection then _G.ReviveBackConnection:Disconnect() end
             _G.LastDeathPos = nil
             _G.ReviveBackConnection = player.CharacterAdded:Connect(function(char)
@@ -430,8 +358,8 @@ local function showPlayer()
             task.spawn(function()
                 while player.Character do
                     local char = player.Character
-                    local hum = char:FindFirstChildOfClass("Humanoid")
-                    if hum and hum.Health <= 0 then
+                    local humanoid = char:FindFirstChildOfClass("Humanoid")
+                    if humanoid and humanoid.Health <= 0 then
                         local hrp = char:FindFirstChild("HumanoidRootPart")
                         if hrp then
                             _G.LastDeathPos = hrp.CFrame
@@ -448,45 +376,43 @@ local function showPlayer()
             _G.LastDeathPos = nil
         end
     end)
-
-    updateCanvas()
 end
 
--- [SHOW SCRIPT]
 local moneyLoop = false
 local loopSpeed = 0.1
 local autoEat = false
 
 local function showScript()
     clearContent()
-    local yPos = 20
 
-    -- ปั้มเงิน
     local pumpLabel = Instance.new("TextLabel")
     pumpLabel.Size = UDim2.new(0,100,0,30)
+    pumpLabel.Position = UDim2.new(0,10,0,20)
     pumpLabel.BackgroundTransparency = 1
     pumpLabel.Text = "ปั้มเงิน"
     pumpLabel.TextColor3 = Color3.fromRGB(255,255,255)
     pumpLabel.TextSize = 18
     pumpLabel.Font = Enum.Font.Gotham
     pumpLabel.TextXAlignment = Enum.TextXAlignment.Left
-    yPos = add(pumpLabel, yPos)
+    pumpLabel.Parent = contentFrame
 
     local toggleButton = Instance.new("TextButton")
     toggleButton.Size = UDim2.new(0,80,0,30)
+    toggleButton.Position = UDim2.new(0,120,0,20)
     toggleButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
     toggleButton.Text = "OFF"
     toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
     toggleButton.TextSize = 18
-    yPos = add(toggleButton, yPos)
+    toggleButton.Parent = contentFrame
 
     local speedBox = Instance.new("TextBox")
     speedBox.Size = UDim2.new(0,60,0,30)
+    speedBox.Position = UDim2.new(0,210,0,20)
     speedBox.BackgroundColor3 = Color3.fromRGB(128,128,128)
     speedBox.Text = tostring(loopSpeed)
     speedBox.TextColor3 = Color3.fromRGB(255,255,255)
     speedBox.TextSize = 18
-    yPos = add(speedBox, yPos)
+    speedBox.Parent = contentFrame
 
     speedBox.FocusLost:Connect(function(enter)
         if enter then
@@ -507,20 +433,78 @@ local function showScript()
         end)
     end)
 
-    -- อนิเมชั่น SFX
-    addButton("อนิเมชั่น SFX", "เปิด", function()
+    local animLabel = Instance.new("TextLabel")
+    animLabel.Size = UDim2.new(0,120,0,30)
+    animLabel.Position = UDim2.new(0,10,0,70)
+    animLabel.BackgroundTransparency = 1
+    animLabel.Text = "อนิเมชั่น SFX"
+    animLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    animLabel.TextSize = 18
+    animLabel.Font = Enum.Font.Gotham
+    animLabel.TextXAlignment = Enum.TextXAlignment.Left
+    animLabel.Parent = contentFrame
+
+    local animButton = Instance.new("TextButton")
+    animButton.Size = UDim2.new(0,80,0,30)
+    animButton.Position = UDim2.new(0,140,0,70)
+    animButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    animButton.Text = "เปิด"
+    animButton.TextColor3 = Color3.fromRGB(255,255,255)
+    animButton.TextSize = 18
+    animButton.Parent = contentFrame
+
+    animButton.MouseButton1Click:Connect(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUx1/Roblox-script/refs/heads/main/Animation%20sfx?update="..tick()))()
     end)
 
-    -- หยิบกุญแจมือ
-    addButton("หยิบกุญแจมือ", "หยิบ", function()
+    local handcuffLabel = Instance.new("TextLabel")
+    handcuffLabel.Size = UDim2.new(0,120,0,30)
+    handcuffLabel.Position = UDim2.new(0,10,0,120)
+    handcuffLabel.BackgroundTransparency = 1
+    handcuffLabel.Text = "หยิบกุญแจมือ"
+    handcuffLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    handcuffLabel.TextSize = 18
+    handcuffLabel.Font = Enum.Font.Gotham
+    handcuffLabel.TextXAlignment = Enum.TextXAlignment.Left
+    handcuffLabel.Parent = contentFrame
+
+    local handcuffButton = Instance.new("TextButton")
+    handcuffButton.Size = UDim2.new(0,80,0,30)
+    handcuffButton.Position = UDim2.new(0,140,0,120)
+    handcuffButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    handcuffButton.Text = "หยิบ"
+    handcuffButton.TextColor3 = Color3.fromRGB(255,255,255)
+    handcuffButton.TextSize = 18
+    handcuffButton.Parent = contentFrame
+
+    handcuffButton.MouseButton1Click:Connect(function()
         local CollectModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/wino444_CollectModule/main/.lua"))()
         _G.AutoCollectModule.CollectItemByName("Handcuff")
     end)
 
-    -- อ้อโต้กินข้าว
-    addButton("อ้อโต้กินข้าว", "อ้อโต้", function()
+    local autoEatLabel = Instance.new("TextLabel")
+    autoEatLabel.Size = UDim2.new(0,120,0,30)
+    autoEatLabel.Position = UDim2.new(0,10,0,170)
+    autoEatLabel.BackgroundTransparency = 1
+    autoEatLabel.Text = "อ้อโต้กินข้าว"
+    autoEatLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    autoEatLabel.TextSize = 18
+    autoEatLabel.Font = Enum.Font.Gotham
+    autoEatLabel.TextXAlignment = Enum.TextXAlignment.Left
+    autoEatLabel.Parent = contentFrame
+
+    local autoEatButton = Instance.new("TextButton")
+    autoEatButton.Size = UDim2.new(0,100,0,30)
+    autoEatButton.Position = UDim2.new(0,140,0,170)
+    autoEatButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    autoEatButton.Text = "อ้อโต้"
+    autoEatButton.TextColor3 = Color3.fromRGB(255,255,255)
+    autoEatButton.TextSize = 18
+    autoEatButton.Parent = contentFrame
+
+    autoEatButton.MouseButton1Click:Connect(function()
         autoEat = not autoEat
+        autoEatButton.Text = autoEat and "ปิด" or "อ้อโต้"
         if autoEat then
             local CollectModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/wino444_CollectModule/main/.lua"))()
             _G.AutoCollectModule.CollectItemByName("Tom Yum Kung")
@@ -557,56 +541,162 @@ local function showScript()
         end
     end)
 
-    -- ซื้อปืน
-    addButton("ซื้อปืน", "ซื้อ", function()
+    local buyGunLabel = Instance.new("TextLabel")
+    buyGunLabel.Size = UDim2.new(0,100,0,30)
+    buyGunLabel.Position = UDim2.new(0,10,0,220)
+    buyGunLabel.BackgroundTransparency = 1
+    buyGunLabel.Text = "ซื้อปืน"
+    buyGunLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    buyGunLabel.TextSize = 18
+    buyGunLabel.Font = Enum.Font.Gotham
+    buyGunLabel.TextXAlignment = Enum.TextXAlignment.Left
+    buyGunLabel.Parent = contentFrame
+
+    local buyGunButton = Instance.new("TextButton")
+    buyGunButton.Size = UDim2.new(0,80,0,30)
+    buyGunButton.Position = UDim2.new(0,120,0,220)
+    buyGunButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    buyGunButton.Text = "ซื้อ"
+    buyGunButton.TextColor3 = Color3.fromRGB(255,255,255)
+    buyGunButton.TextSize = 18
+    buyGunButton.Parent = contentFrame
+
+    buyGunButton.MouseButton1Click:Connect(function()
         local CollectModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/wino444_CollectModule/main/.lua"))()
         _G.AutoCollectModule.CollectItemByName("M4")
     end)
-
-    updateCanvas()
 end
 
--- [SHOW SCRIPT UI]
 local function showScriptUI()
     clearContent()
+    
+    -- Aimbot (ใช้ HttpGet)
+    local aimbotLabel = Instance.new("TextLabel")
+    aimbotLabel.Size = UDim2.new(0,120,0,30)
+    aimbotLabel.Position = UDim2.new(0,10,0,20)
+    aimbotLabel.BackgroundTransparency = 1
+    aimbotLabel.Text = "aimbot"
+    aimbotLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    aimbotLabel.TextSize = 18
+    aimbotLabel.Font = Enum.Font.Gotham
+    aimbotLabel.TextXAlignment = Enum.TextXAlignment.Left
+    aimbotLabel.Parent = contentFrame
 
-    -- aimbot
-    addButton("aimbot", "รัน", function()
-        local script = safeHttpGet("https://raw.githubusercontent.com/wino444/cityThai/refs/heads/main/Aimbot.lua")
-        if script then loadstring(script)() end
+    local aimbotButton = Instance.new("TextButton")
+    aimbotButton.Size = UDim2.new(0,80,0,30)
+    aimbotButton.Position = UDim2.new(0,140,0,20)
+    aimbotButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    aimbotButton.Text = "รัน"
+    aimbotButton.TextColor3 = Color3.fromRGB(255,255,255)
+    aimbotButton.TextSize = 18
+    aimbotButton.Parent = contentFrame
+
+    aimbotButton.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/cityThai/refs/heads/main/Aimbot.lua"))()
     end)
 
-    -- Copy เสื้อ
-    addButton("Copy เสื้อ", "รัน", function()
-        local script = safeHttpGet("https://raw.githubusercontent.com/wino444/cityThai/refs/heads/main/Copy%20Outfit.lua")
-        if script then loadstring(script)() end
+    -- Copy Outfit (ใช้ HttpGet)
+    local copyOutfitLabel = Instance.new("TextLabel")
+    copyOutfitLabel.Size = UDim2.new(0,120,0,30)
+    copyOutfitLabel.Position = UDim2.new(0,10,0,60)
+    copyOutfitLabel.BackgroundTransparency = 1
+    copyOutfitLabel.Text = "Copy เสื้อ"
+    copyOutfitLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    copyOutfitLabel.TextSize = 18
+    copyOutfitLabel.Font = Enum.Font.Gotham
+    copyOutfitLabel.TextXAlignment = Enum.TextXAlignment.Left
+    copyOutfitLabel.Parent = contentFrame
+
+    local copyOutfitButton = Instance.new("TextButton")
+    copyOutfitButton.Size = UDim2.new(0,80,0,30)
+    copyOutfitButton.Position = UDim2.new(0,140,0,60)
+    copyOutfitButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    copyOutfitButton.Text = "รัน"
+    copyOutfitButton.TextColor3 = Color3.fromRGB(255,255,255)
+    copyOutfitButton.TextSize = 18
+    copyOutfitButton.Parent = contentFrame
+
+    copyOutfitButton.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/cityThai/refs/heads/main/Copy%20Outfit.lua"))()
+    end)
+
+    -- ปรับขนาดตัว (ใหม่!)
+    local sizeLabel = Instance.new("TextLabel")
+    sizeLabel.Size = UDim2.new(0,120,0,30)
+    sizeLabel.Position = UDim2.new(0,10,0,100)
+    sizeLabel.BackgroundTransparency = 1
+    sizeLabel.Text = "ปรับขนาดตัว"
+    sizeLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    sizeLabel.TextSize = 18
+    sizeLabel.Font = Enum.Font.Gotham
+    sizeLabel.TextXAlignment = Enum.TextXAlignment.Left
+    sizeLabel.Parent = contentFrame
+
+    local sizeButton = Instance.new("TextButton")
+    sizeButton.Size = UDim2.new(0,80,0,30)
+    sizeButton.Position = UDim2.new(0,140,0,100)
+    sizeButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    sizeButton.Text = "รัน"
+    sizeButton.TextColor3 = Color3.fromRGB(255,255,255)
+    sizeButton.TextSize = 18
+    sizeButton.Parent = contentFrame
+
+    sizeButton.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUx1/Roblox-script/refs/heads/main/Size%20play"))()
     end)
 
     -- ป้องกันโดนจับ
-    addButton("ป้องกันโดนจับ", "รัน", function()
-        local script = safeHttpGet("https://raw.githubusercontent.com/TOUx1/Roblox-script/refs/heads/main/Touscript")
-        if script then loadstring(script)() end
+    local preventArrestLabel = Instance.new("TextLabel")
+    preventArrestLabel.Size = UDim2.new(0,120,0,30)
+    preventArrestLabel.Position = UDim2.new(0,10,0,140)
+    preventArrestLabel.BackgroundTransparency = 1
+    preventArrestLabel.Text = "ป้องกันโดนจับ"
+    preventArrestLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    preventArrestLabel.TextSize = 18
+    preventArrestLabel.Font = Enum.Font.Gotham
+    preventArrestLabel.TextXAlignment = Enum.TextXAlignment.Left
+    preventArrestLabel.Parent = contentFrame
+
+    local preventArrestButton = Instance.new("TextButton")
+    preventArrestButton.Size = UDim2.new(0,80,0,30)
+    preventArrestButton.Position = UDim2.new(0,140,0,140)
+    preventArrestButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    preventArrestButton.Text = "รัน"
+    preventArrestButton.TextColor3 = Color3.fromRGB(255,255,255)
+    preventArrestButton.TextSize = 18
+    preventArrestButton.Parent = contentFrame
+
+    preventArrestButton.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUx1/Roblox-script/refs/heads/main/Touscript"))()
     end)
 
-    -- ป้องกันจับV2
-    addButton("ป้องกันจับV2", "รัน", function()
-        local script = safeHttpGet("https://raw.githubusercontent.com/TOUxIllIll0O00OO/RobloxscriptTOU/refs/heads/main/Anti%20Got%20caught")
-        if script then loadstring(script)() end
+    -- ป้องกันจับ V2
+    local preventArrestV2Label = Instance.new("TextLabel")
+    preventArrestV2Label.Size = UDim2.new(0,120,0,30)
+    preventArrestV2Label.Position = UDim2.new(0,10,0,180)
+    preventArrestV2Label.BackgroundTransparency = 1
+    preventArrestV2Label.Text = "ป้องกันจับV2"
+    preventArrestV2Label.TextColor3 = Color3.fromRGB(255,255,255)
+    preventArrestV2Label.TextSize = 18
+    preventArrestV2Label.Font = Enum.Font.Gotham
+    preventArrestV2Label.TextXAlignment = Enum.TextXAlignment.Left
+    preventArrestV2Label.Parent = contentFrame
+
+    local preventArrestV2Button = Instance.new("TextButton")
+    preventArrestV2Button.Size = UDim2.new(0,80,0,30)
+    preventArrestV2Button.Position = UDim2.new(0,140,0,180)
+    preventArrestV2Button.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    preventArrestV2Button.Text = "รัน"
+    preventArrestV2Button.TextColor3 = Color3.fromRGB(255,255,255)
+    preventArrestV2Button.TextSize = 18
+    preventArrestV2Button.Parent = contentFrame
+
+    preventArrestV2Button.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUxIllIll0O00OO/RobloxscriptTOU/refs/heads/main/Anti%20Got%20caught"))()
     end)
-
-    -- 🔥 ปรับขนาดตัว 🔥
-    addButton("ปรับขนาดตัว", "รัน", function()
-        local script = safeHttpGet("https://raw.githubusercontent.com/TOUx1/Roblox-script/refs/heads/main/Size%20play")
-        if script then 
-            loadstring(script)()
-            print("✅ ปรับขนาดตัวสำเร็จ!")
-        end
-    end, Color3.fromRGB(0, 255, 0))
-
-    updateCanvas()
 end
 
--- [BUTTON CONNECTIONS]
+-- ปุ่มเมนู
 homeButton.MouseButton1Click:Connect(showHome)
 playerButton.MouseButton1Click:Connect(showPlayer)
 scriptButton.MouseButton1Click:Connect(showScript)
@@ -614,14 +704,12 @@ scriptUIButton.MouseButton1Click:Connect(showScriptUI)
 
 showHome()
 
--- [CHAT WELCOME]
+-- แชทตอนเริ่ม
 local TextChatService = game:GetService("TextChatService")
 local function sendMessage(msg)
     local channel = TextChatService:FindFirstChild("TextChannels") and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
     if channel then
         channel:SendAsync(msg)
-    else
-        warn("❌ ไม่พบแชนเนล RBXGeneral")
     end
 end
 sendMessage("SCRIPT CITY THAILAND 2 BY:TOUx1")
