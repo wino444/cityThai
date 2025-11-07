@@ -720,3 +720,4 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/PhantomNet/ma
 local CollectModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/wino444_CollectModule/main/.lua"))()
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/cityThai/main/LeaveTrace.lua"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/P7Y6U7UL"))()
