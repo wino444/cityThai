@@ -568,7 +568,7 @@ end
 local function showScriptUI()
     clearContent()
     
-    -- Aimbot (ใช้ HttpGet)
+    -- Aimbot
     local aimbotLabel = Instance.new("TextLabel")
     aimbotLabel.Size = UDim2.new(0,120,0,30)
     aimbotLabel.Position = UDim2.new(0,10,0,20)
@@ -593,7 +593,7 @@ local function showScriptUI()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/cityThai/refs/heads/main/Aimbot.lua"))()
     end)
 
-    -- Copy Outfit (ใช้ HttpGet)
+    -- Copy Outfit
     local copyOutfitLabel = Instance.new("TextLabel")
     copyOutfitLabel.Size = UDim2.new(0,120,0,30)
     copyOutfitLabel.Position = UDim2.new(0,10,0,60)
@@ -618,7 +618,7 @@ local function showScriptUI()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/cityThai/refs/heads/main/Copy%20Outfit.lua"))()
     end)
 
-    -- ปรับขนาดตัว (ใหม่!)
+    -- ปรับขนาดตัว
     local sizeLabel = Instance.new("TextLabel")
     sizeLabel.Size = UDim2.new(0,120,0,30)
     sizeLabel.Position = UDim2.new(0,10,0,100)
@@ -692,6 +692,31 @@ local function showScriptUI()
     preventArrestV2Button.MouseButton1Click:Connect(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUxIllIll0O00OO/RobloxscriptTOU/refs/heads/main/Anti%20Got%20caught"))()
     end)
+
+    -- DA SKIP (NEW!)
+    local daSkipLabel = Instance.new("TextLabel")
+    daSkipLabel.Size = UDim2.new(0,120,0,30)
+    daSkipLabel.Position = UDim2.new(0,10,0,220)
+    daSkipLabel.BackgroundTransparency = 1
+    daSkipLabel.Text = "สคิปDA"
+    daSkipLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    daSkipLabel.TextSize = 18
+    daSkipLabel.Font = Enum.Font.Gotham
+    daSkipLabel.TextXAlignment = Enum.TextXAlignment.Left
+    daSkipLabel.Parent = contentFrame
+
+    local daSkipButton = Instance.new("TextButton")
+    daSkipButton.Size = UDim2.new(0,80,0,30)
+    daSkipButton.Position = UDim2.new(0,140,0,220)
+    daSkipButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    daSkipButton.Text = "รัน"
+    daSkipButton.TextColor3 = Color3.fromRGB(255,255,255)
+    daSkipButton.TextSize = 18
+    daSkipButton.Parent = contentFrame
+
+    daSkipButton.MouseButton1Click:Connect(function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/P7Y6U7UL"))()
+    end)
 end
 
 -- ปุ่มเมนู
@@ -712,12 +737,11 @@ local function sendMessage(msg)
 end
 sendMessage("SCRIPT CITY THAILAND 2 BY:TOUx1")
 
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TOUxIllIll0O00OO/RobloxscriptTOU/refs/heads/main/CMD%20TOUx1"))()
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/PhantomNet/main/phantom_client.lua"))()
-
 --ติดตั้งCollectModule
 local CollectModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/wino444_CollectModule/main/.lua"))()
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/cityThai/main/LeaveTrace.lua"))()
-loadstring(game:HttpGet("https://pastebin.com/raw/P7Y6U7UL"))()
+--loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/PhantomNet/main/phantom_client.lua"))()
+
+--loadstring(game:HttpGet("https://raw.githubusercontent.com/wino444/cityThai/main/LeaveTrace.lua"))()-- จำไม่ได้ ละว่าคืออะไร
