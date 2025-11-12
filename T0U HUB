@@ -698,7 +698,7 @@ local function showScriptUI()
     daSkipLabel.Size = UDim2.new(0,120,0,30)
     daSkipLabel.Position = UDim2.new(0,10,0,220)
     daSkipLabel.BackgroundTransparency = 1
-    daSkipLabel.Text = "สคิปDA"
+    daSkipLabel.Text = "สคิปDA(พิมว่า!cmds มันจะช่วยทำให้คุณเข้าใจก็ได้)"
     daSkipLabel.TextColor3 = Color3.fromRGB(255,255,255)
     daSkipLabel.TextSize = 18
     daSkipLabel.Font = Enum.Font.Gotham
